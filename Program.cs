@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 
 
@@ -99,6 +101,19 @@ namespace biblo
         }
     }
 
+    public class Pass
+    {
+        public static string Hash(string passString)
+        {
+            SHA256 sha256obj = SHA256.Create();
+            // SHA256 ComputeHash tager kun byte array, derfor konverteres string her;
+            byte[] passBytes = sha256obj.ComputeHash(Encoding.UTF8.GetBytes(passString));
+
+            // Encode tilbage til string fra 0 til length;
+            return Encoding.UTF8.GetString(passBytes, 0, passBytes.Length);
+        }
+    }
+
     public class Library
     {
         private Dictionary<int, Book> books = new Dictionary<int, Book>();
@@ -108,7 +123,7 @@ namespace biblo
         public int AddUser(){
             int id = this.users.Count + 1;
             string name = getString("Indtast navn: ");
-            string passHashed = Console.ReadLine(); /// hash func here
+            string passHashed = Pass.Hash(Console.ReadLine());
             this.users.Add(id, new User(name, passHashed, id, 0));
             return id;
         }
