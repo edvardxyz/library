@@ -18,6 +18,37 @@ namespace biblo
 
         }
     }
+
+    public class Interface
+    {
+
+        static void Run(){
+        bool running = true;
+            do
+            {
+                Library.getInput("Log ind\nSkriv bruger id: ");
+
+
+            }while(running);
+        }
+
+        static string getPass()
+        {
+            string password = null;
+            do
+            {
+                ConsoleKeyInfo keyinfo = Console.ReadKey(true);
+
+                if(keyinfo.Key == ConsoleKey.Enter)
+                    break;
+
+                password += keyinfo.KeyChar;
+            }while(true);
+            return password;
+        }
+
+    }
+
     [Serializable]
     public class Book
     {
@@ -55,12 +86,14 @@ namespace biblo
     public class User
     {
         public string name;
+        public string passHashed;
         public int id;
         public int booksBorrowed;
 
-        public User(string name, int id, int booksBorrowed){
+        public User(string name,string passHashed, int id, int booksBorrowed){
 
             this.name = name;
+            this.passHashed = passHashed;
             this.id = id;
             this.booksBorrowed = booksBorrowed;
         }
@@ -72,14 +105,27 @@ namespace biblo
         private Dictionary<int, User> users = new Dictionary<int, User>();
         private IFormatter formatter = new BinaryFormatter();
 
+        public int AddUser(){
+            int id = this.users.Count + 1;
+            string name = getString("Indtast navn: ");
+            string passHashed = Console.ReadLine(); /// hash func here
+            this.users.Add(id, new User(name, passHashed, id, 0));
+            return id;
+        }
+
+        public void RemoveUser(int id)
+        {
+            this.users.Remove(id);
+        }
+
         public void AddBook(int isbn){
             if(this.books.ContainsKey(isbn)){
                 this.books[isbn].incCount();
             }else{
-                string title = Console.ReadLine();
-                string author = Console.ReadLine();
-                string publisher = Console.ReadLine();
-                string genre = Console.ReadLine();
+                string title = getString("Indtast bogens titel: ");
+                string author = getString("Indtast bogens forfatter: ");
+                string publisher = getString("Indtast bogens forlag: ");
+                string genre = getString("Indtast bogens genre: ");
                 int published = getInput("Skriv hvad år bogen blev udgivet: ");
                 int pages = getInput("Skriv hvor mange sider bogen har: ");
                 this.books.Add(isbn, new Book(title, author, publisher, genre, published, pages, isbn));
@@ -110,23 +156,41 @@ namespace biblo
 
         public void Export()
         {
-            Stream stream = new FileStream("library.dat", FileMode.Create, FileAccess.Write);
-            formatter.Serialize(stream, books);
-            stream.Close();
+            Stream streambooks = new FileStream("books.dat", FileMode.Create, FileAccess.Write);
+            formatter.Serialize(streambooks, books);
+            streambooks.Close();
+
+            Stream streamusers = new FileStream("users.dat", FileMode.Create, FileAccess.Write);
+            formatter.Serialize(streamusers, books);
+            streamusers.Close();
+
         }
 
         public void Import()
         {
-            Stream stream = new FileStream("library.dat", FileMode.Open, FileAccess.Read);
-            formatter.Serialize(stream, books);
-            stream.Close();
+            Stream streambooks = new FileStream("books.dat", FileMode.Open, FileAccess.Read);
+            formatter.Serialize(streambooks, books);
+            streambooks.Close();
+
+            Stream streamusers = new FileStream("users.dat", FileMode.Open, FileAccess.Read);
+            formatter.Serialize(streamusers, books);
+            streamusers.Close();
         }
 
-        static int getInput(string message)
+        public static string getString(string message)
+        {
+                Console.Clear();
+                Console.Write(message);
+                return Console.ReadLine();
+        }
+
+        public static int getInput(string message)
         {
             int number;
             do
             {
+                Console.Clear();
+                Console.Write(message);
                 Console.Write(message);
             } while (!int.TryParse(Console.ReadLine(), out number));
             return number;
