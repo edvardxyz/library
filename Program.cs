@@ -24,24 +24,24 @@ namespace biblo
         public static void Run(){
             Library lib = new Library();
             lib.Import();
-            bool running = true;
             int loginID;
             bool login = false;
             int passTries;
 
 RunMenu:
-            int menu = getInput("1) Bruger login\n2) Opret bruger\n3) Admin login\n4) Exit");
+            int menu = GetDigit("1) Bruger login\n2) Opret bruger\n3) Admin login\n4) Exit", 4);
 
             switch (menu)
             {
                 // bruger login
                 case 1:
                     passTries = 5;
-                    loginID = getInput("Log ind\nSkriv bruger id: ");
+                    loginID = GetInput("Log ind\nSkriv bruger id: ");
                     if(lib.UserExists(loginID)){
                         do{
-                            if(lib.CheckPass(loginID, getPass())){
+                            if(lib.CheckPass(loginID, GetPass())){
                                 login = true;
+                                break;
                             }else{
                                 Console.WriteLine("Forkert kode!\n{0} forsøg tilbage\nTryk enter for at prøve igen.\nEller Escape for at lukke",passTries);
                                 if (Console.ReadKey(true).Key == ConsoleKey.Escape)
@@ -54,20 +54,26 @@ RunMenu:
                         Console.ReadKey(true);
                     }
                     if(login)
-                        UserMenu(lib);
+                        UserMenu(lib, loginID);
                     login = false;
                     goto RunMenu;
 
                     // opret ny bruger
                 case 2:
+                    Console.Clear();
+                    Console.WriteLine("Dit bruger id er: {0}", lib.AddUser());
+                    Console.WriteLine("Brug dit id til at logge ind");
+                    Console.WriteLine("\nTryk for at gå tilbage");
+                    Console.ReadKey(true);
                     goto RunMenu;
 
                     // admin login
                 case 3:
                     passTries = 5;
                     do{
-                            if(getPass() == "2ad7ad0140cec87a43659ea2bdba3a0a3572d2fab425ec9241d18ae096840d48"){
+                            if(GetPass() == "aac2cb9a3eceed43645c27cb355611b0c48afae5320d53f6ffe6f7e8a28cd589"){
                                 login = true;
+                                break;
                             }else{
                                 Console.WriteLine("Forkert kode!\n{0} forsøg tilbage\nTryk enter for at prøve igen.\nEller Escape for at lukke",passTries);
                                 if (Console.ReadKey(true).Key == ConsoleKey.Escape)
@@ -90,56 +96,78 @@ RunMenu:
             lib.Export();
         }
 
-        private static void UserMenu(Library lib){
+        private static void UserMenu(Library lib, int id){
 UserMenu:
-            int menu = getInput("1) Lån bog\n2) Aflever bog\n3) Slet bruger\n4) Log ud");
+            int menu = GetDigit("1) Lån bog\n2) Aflever bog\n3) Se hvilke bøger du har lånt\n4) Se hvilke bøger biblioteket har\n5) Slet bruger\n6) Log ud", 6);
 
             switch (menu)
             {
                 case 1:
+                    lib.BorrowBook(id, GetInput("Indtast ISBN på bogen du vil låne: "));
                     goto UserMenu;
                 case 2:
+                    lib.ReturnBook(id, GetInput("Indtast ISBN på bogen du vil aflevere: "));
                     goto UserMenu;
                 case 3:
+                    lib.ShowUserBorrowed(id);
                     goto UserMenu;
                 case 4:
+                    lib.ShowCollection();
+                    goto UserMenu;
+                case 5:
+                    do{
+                        Console.WriteLine("\nEr du sikker på du vil slette din bruger?");
+                        Console.WriteLine("Tryk 'y' for at bekræfte, tryk en anden tast for at fortryde");
+                        if (Console.ReadKey(true).Key == ConsoleKey.Y){
+                            lib.RemoveUser(id);
+                        }else{
+                            break;
+                        }
+                    }while(true);
+                    goto UserMenu;
+                case 6:
                     break;
                 default:
-                    Console.WriteLine("Ikke en menu!");
-                    Console.ReadKey(true);
                     goto UserMenu;
             }
         }
 
         private static void AdminMenu(Library lib){
 UserMenu:
-            int menu = getInput("1) Opret bog\n2) Slet bog\n3) Slet bruger\n4) Log ud");
+            int menu = GetDigit("1) Opret bog\n2) Slet bog\n3) Slet bruger\n4) Vis alle bøger\n5) Vis alle brugere\n6) Log ud", 6);
 
             switch (menu)
             {
                 case 1:
+                    lib.AddBook(GetInput("Indtast bogens ISBN nummer: "));
                     goto UserMenu;
                 case 2:
+                    lib.RemoveBook(GetInput("Indtast bogens ISBN nummber: "));
                     goto UserMenu;
                 case 3:
+                    lib.RemoveUser(GetInput("Indtast brugerens ID: "));
                     goto UserMenu;
                 case 4:
+                    lib.ShowCollection();
+                    goto UserMenu;
+                case 5:
+                    lib.ShowUsers();
+                    goto UserMenu;
+                case 6:
                     break;
                 default:
-                    Console.WriteLine("Ikke en menu!");
-                    Console.ReadKey(true);
                     goto UserMenu;
             }
         }
 
-        public static string getString(string message)
+        public static string GetString(string message)
         {
             Console.Clear();
                 Console.Write(message);
                 return Console.ReadLine();
         }
 
-        public static int getInput(string message)
+        public static int GetInput(string message)
         {
             int number;
             do
@@ -150,8 +178,22 @@ UserMenu:
             return number;
         }
 
-        public static string getPass()
+        public static int GetDigit(string message, int max)
         {
+            int number;
+            do
+            {
+                Console.Clear();
+                Console.Write(message);
+                number = Console.ReadKey(true).KeyChar - '0';
+            } while (number > max || number < 1);
+            return number;
+        }
+
+        public static string GetPass()
+        {
+            Console.Clear();
+            Console.Write("Indtast kode: ");
             string password = null;
             do
             {
@@ -176,7 +218,7 @@ UserMenu:
         public int published;
         public int pages;
         public int isbn;
-        private int countOfBook;
+        public int countOfBook;
 
         public Book(string title, string author, string publisher, string genre, int published, int pages, int isbn){
 
@@ -187,7 +229,7 @@ UserMenu:
             this.published = published;
             this.pages = pages;
             this.isbn = isbn;
-            countOfBook = 1;
+            this.countOfBook = 1;
         }
 
         public void incCount(){
@@ -205,14 +247,54 @@ UserMenu:
         public string name;
         public string passHashed;
         public int id;
-        public int booksBorrowed;
+        public int borrowedCount;
+        private Dictionary<int, Book> booksBorrowed = new Dictionary<int, Book>();
 
-        public User(string name,string passHashed, int id, int booksBorrowed){
-
+        public User(string name,string passHashed, int id, int borrowedCount){
             this.name = name;
             this.passHashed = passHashed;
             this.id = id;
-            this.booksBorrowed = booksBorrowed;
+            this.borrowedCount = borrowedCount;
+        }
+        public bool HasBook(int isbn){
+            if(this.booksBorrowed.ContainsKey(isbn))
+                return true;
+            else
+                return false;
+        }
+
+        public void Borrow(Book book){
+            booksBorrowed.Add(book.isbn, book);
+        }
+
+        public Book Return(int isbn){
+            Book returnbook = booksBorrowed[isbn];
+            booksBorrowed.Remove(isbn);
+            return returnbook;
+        }
+
+        public void ShowBorrowed()
+        {
+            Console.Clear();
+            Console.WriteLine("\n=======================================\n=======================================");
+            if(this.booksBorrowed.Count > 0){
+                foreach(Book book in this.booksBorrowed.Values){
+                    Console.WriteLine("Titel: {0}", book.title);
+                    Console.WriteLine("Forfatter: {0}",book.author);
+                    Console.WriteLine("ISBN: {0}",book.isbn);
+                    Console.WriteLine("Genre:: {0}",book.genre);
+                    Console.WriteLine("Sider: {0}",book.pages);
+                    Console.WriteLine("Udgivet: {0}",book.published);
+                    Console.WriteLine("Forlag: {0}",book.publisher);
+                    Console.WriteLine("Antal: {0}",book.countOfBook);
+                    Console.WriteLine("=======================================");
+                }
+            }else{
+                Console.WriteLine("Du har ikke lånt nogen bøger :(");
+            }
+            Console.WriteLine("=======================================");
+            Console.WriteLine("Tryk en tast for at gå tilbage");
+            Console.ReadKey(true);
         }
     }
 
@@ -220,12 +302,16 @@ UserMenu:
     {
         public static string Hash(string passString)
         {
+            string passHashString = "";
             SHA256 sha256obj = SHA256.Create();
             // SHA256 ComputeHash tager kun byte array, derfor konverteres string her;
             byte[] passBytes = sha256obj.ComputeHash(Encoding.UTF8.GetBytes(passString));
 
-            // Encode tilbage til string fra 0 til length;
-            return Encoding.UTF8.GetString(passBytes, 0, passBytes.Length);
+            for ( int i =0; i < passBytes.Length; i++){
+
+                passHashString += passBytes[i].ToString("x2");
+            }
+            return passHashString;
         }
     }
 
@@ -238,6 +324,36 @@ UserMenu:
         public bool CheckPass(int id, string pass){
             if(this.users[id].passHashed == pass)
                 return true;
+            else
+                return false;
+        }
+
+        public void ReturnBook(int id, int isbn){
+            if(users[id].HasBook(isbn)){
+                if(this.books.ContainsKey(isbn)){
+                    this.books[isbn].incCount();
+                }else{
+                    this.books.Add(isbn, this.users[id].Return(isbn));
+                }
+            }
+        }
+
+        public void ShowUserBorrowed(int id){
+            users[id].ShowBorrowed();
+        }
+
+        public bool BookExists(int isbn){
+            if(this.books.ContainsKey(isbn))
+                return true;
+            else
+                return false;
+        }
+
+        public bool BorrowBook(int id, int isbn){
+            if(BookExists(isbn)){
+                this.users[id].Borrow(books[isbn]);
+                return true;
+            }
             else
                 return false;
         }
@@ -260,8 +376,8 @@ UserMenu:
 
         public int AddUser(){
             int id = getHighestID() + 1;
-            string name = Interface.getString("Indtast navn: ");
-            string passHashed = Interface.getPass();
+            string name = Interface.GetString("Indtast navn: ");
+            string passHashed = Interface.GetPass();
             this.users.Add(id, new User(name, passHashed, id, 0));
             return id;
         }
@@ -275,12 +391,12 @@ UserMenu:
             if(this.books.ContainsKey(isbn)){
                 this.books[isbn].incCount();
             }else{
-                string title = Interface.getString("Indtast bogens titel: ");
-                string author = Interface.getString("Indtast bogens forfatter: ");
-                string publisher = Interface.getString("Indtast bogens forlag: ");
-                string genre = Interface.getString("Indtast bogens genre: ");
-                int published = Interface.getInput("Skriv hvad år bogen blev udgivet: ");
-                int pages = Interface.getInput("Skriv hvor mange sider bogen har: ");
+                string title = Interface.GetString("Indtast bogens titel: ");
+                string author = Interface.GetString("Indtast bogens forfatter: ");
+                string publisher = Interface.GetString("Indtast bogens forlag: ");
+                string genre = Interface.GetString("Indtast bogens genre: ");
+                int published = Interface.GetInput("Skriv hvad år bogen blev udgivet: ");
+                int pages = Interface.GetInput("Skriv hvor mange sider bogen har: ");
                 this.books.Add(isbn, new Book(title, author, publisher, genre, published, pages, isbn));
             }
         }
@@ -296,15 +412,46 @@ UserMenu:
 
         public void ShowCollection()
         {
+            Console.Clear();
+            Console.WriteLine("\n=======================================\n=======================================");
             if(this.books.Count > 0){
                 foreach(Book book in this.books.Values){
-                    Console.WriteLine(book.title);
-                    Console.WriteLine(book.author);
-                    Console.WriteLine(book.isbn);
+                    Console.WriteLine("Titel: {0}", book.title);
+                    Console.WriteLine("Forfatter: {0}",book.author);
+                    Console.WriteLine("ISBN: {0}",book.isbn);
+                    Console.WriteLine("Genre:: {0}",book.genre);
+                    Console.WriteLine("Sider: {0}",book.pages);
+                    Console.WriteLine("Udgivet: {0}",book.published);
+                    Console.WriteLine("Forlag: {0}",book.publisher);
+                    Console.WriteLine("Antal: {0}",book.countOfBook);
+                    Console.WriteLine("=======================================");
                 }
             }else{
                 Console.WriteLine("Der er ikke nogen bøger i det her bibliotek :(");
             }
+            Console.WriteLine("=======================================");
+            Console.WriteLine("Tryk en tast for at gå tilbage");
+            Console.ReadKey(true);
+        }
+
+        public void ShowUsers()
+        {
+            Console.Clear();
+            Console.WriteLine("\n=======================================\n=======================================");
+            if(this.users.Count > 0){
+                foreach(User user in this.users.Values){
+                    Console.WriteLine(user.name);
+                    Console.WriteLine(user.id);
+                    Console.WriteLine(user.borrowedCount);
+                    Console.WriteLine(user.passHashed);
+                    Console.WriteLine("=======================================");
+                }
+            }else{
+                Console.WriteLine("Der er ikke nogen brugere :(");
+            }
+            Console.WriteLine("\n=======================================\n=======================================");
+            Console.WriteLine("Tryk en tast for at gå tilbage");
+            Console.ReadKey(true);
         }
 
         public void Export()
@@ -353,4 +500,3 @@ Kode skal afleveres via github.
 Dokumentation skal ligge i PDF format (PDF'en skal også indeholde klasse diagrammet med beskrivele).
 
 */
-
