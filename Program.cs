@@ -120,6 +120,7 @@ UserMenu:
                         Console.WriteLine("Tryk 'y' for at bekræfte, tryk en anden tast for at fortryde");
                         if (Console.ReadKey(true).Key == ConsoleKey.Y){
                             lib.RemoveUser(id);
+                            goto case 6;
                         }else{
                             break;
                         }
@@ -233,7 +234,7 @@ UserMenu:
         }
 
         public void incCount(){
-            countOfBook++;
+            this.countOfBook++;
         }
 
         public int decCount(){
@@ -264,13 +265,37 @@ UserMenu:
         }
 
         public void Borrow(Book book){
-            booksBorrowed.Add(book.isbn, book);
+            if(booksBorrowed.ContainsKey(book.isbn)){
+                booksBorrowed[book.isbn].incCount();
+                this.borrowedCount++;
+            }
+            else{
+                Book copyBook = new Book(
+                        book.title,
+                        book.author,
+                        book.publisher,
+                        book.genre,
+                        book.published,
+                        book.pages,
+                        book.isbn);
+                booksBorrowed.Add(book.isbn, copyBook);
+                this.borrowedCount++;
+            }
         }
 
         public Book Return(int isbn){
-            Book returnbook = booksBorrowed[isbn];
-            booksBorrowed.Remove(isbn);
-            return returnbook;
+            Book returnBook = new Book(
+                    booksBorrowed[isbn].title,
+                    booksBorrowed[isbn].author,
+                    booksBorrowed[isbn].publisher,
+                    booksBorrowed[isbn].genre,
+                    booksBorrowed[isbn].published,
+                    booksBorrowed[isbn].pages,
+                    booksBorrowed[isbn].isbn);
+
+            if(booksBorrowed[isbn].decCount() < 1)
+                booksBorrowed.Remove(isbn);
+            return returnBook;
         }
 
         public void ShowBorrowed()
@@ -352,6 +377,7 @@ UserMenu:
         public bool BorrowBook(int id, int isbn){
             if(BookExists(isbn)){
                 this.users[id].Borrow(books[isbn]);
+                RemoveBook(isbn);
                 return true;
             }
             else
