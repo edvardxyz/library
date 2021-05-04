@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
@@ -15,26 +14,143 @@ namespace biblo
     {
         static void Main()
         {
-
-
-
+            Interface.Run();
         }
     }
 
     public class Interface
     {
 
-        static void Run(){
-        bool running = true;
-            do
+        public static void Run(){
+            Library lib = new Library();
+            lib.Import();
+            bool running = true;
+            int loginID;
+            bool login = false;
+            int passTries;
+
+RunMenu:
+            int menu = getInput("1) Bruger login\n2) Opret bruger\n3) Admin login\n4) Exit");
+
+            switch (menu)
             {
-                Library.getInput("Log ind\nSkriv bruger id: ");
+                // bruger login
+                case 1:
+                    passTries = 5;
+                    loginID = getInput("Log ind\nSkriv bruger id: ");
+                    if(lib.UserExists(loginID)){
+                        do{
+                            if(lib.CheckPass(loginID, getPass())){
+                                login = true;
+                            }else{
+                                Console.WriteLine("Forkert kode!\n{0} forsøg tilbage\nTryk enter for at prøve igen.\nEller Escape for at lukke",passTries);
+                                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                                    break;
+                            }
+                        }while(--passTries > 0);
 
+                    }else{
+                        Console.WriteLine("Bruger eksistere ikke\nTryk en tast for at fortsætte");
+                        Console.ReadKey(true);
+                    }
+                    if(login)
+                        UserMenu(lib);
+                    login = false;
+                    goto RunMenu;
 
-            }while(running);
+                    // opret ny bruger
+                case 2:
+                    goto RunMenu;
+
+                    // admin login
+                case 3:
+                    passTries = 5;
+                    do{
+                            if(getPass() == "2ad7ad0140cec87a43659ea2bdba3a0a3572d2fab425ec9241d18ae096840d48"){
+                                login = true;
+                            }else{
+                                Console.WriteLine("Forkert kode!\n{0} forsøg tilbage\nTryk enter for at prøve igen.\nEller Escape for at lukke",passTries);
+                                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                                    break;
+                            }
+                        }while(--passTries > 0);
+                    if(login)
+                        AdminMenu(lib);
+                    login = false;
+                    goto RunMenu;
+                    // Exit
+                case 4:
+                    break;
+                default:
+                    Console.WriteLine("Ikke en menu!");
+                    Console.ReadKey(true);
+                    goto RunMenu;
+            }
+
+            lib.Export();
         }
 
-        static string getPass()
+        private static void UserMenu(Library lib){
+UserMenu:
+            int menu = getInput("1) Lån bog\n2) Aflever bog\n3) Slet bruger\n4) Log ud");
+
+            switch (menu)
+            {
+                case 1:
+                    goto UserMenu;
+                case 2:
+                    goto UserMenu;
+                case 3:
+                    goto UserMenu;
+                case 4:
+                    break;
+                default:
+                    Console.WriteLine("Ikke en menu!");
+                    Console.ReadKey(true);
+                    goto UserMenu;
+            }
+        }
+
+        private static void AdminMenu(Library lib){
+UserMenu:
+            int menu = getInput("1) Opret bog\n2) Slet bog\n3) Slet bruger\n4) Log ud");
+
+            switch (menu)
+            {
+                case 1:
+                    goto UserMenu;
+                case 2:
+                    goto UserMenu;
+                case 3:
+                    goto UserMenu;
+                case 4:
+                    break;
+                default:
+                    Console.WriteLine("Ikke en menu!");
+                    Console.ReadKey(true);
+                    goto UserMenu;
+            }
+        }
+
+        public static string getString(string message)
+        {
+            Console.Clear();
+                Console.Write(message);
+                return Console.ReadLine();
+        }
+
+        public static int getInput(string message)
+        {
+            int number;
+            do
+            {
+                Console.Clear();
+                Console.Write(message);
+            } while (!int.TryParse(Console.ReadLine(), out number));
+            return number;
+        }
+
+        public static string getPass()
         {
             string password = null;
             do
@@ -46,9 +162,8 @@ namespace biblo
 
                 password += keyinfo.KeyChar;
             }while(true);
-            return password;
+            return Pass.Hash(password);
         }
-
     }
 
     [Serializable]
@@ -120,10 +235,33 @@ namespace biblo
         private Dictionary<int, User> users = new Dictionary<int, User>();
         private IFormatter formatter = new BinaryFormatter();
 
+        public bool CheckPass(int id, string pass){
+            if(this.users[id].passHashed == pass)
+                return true;
+            else
+                return false;
+        }
+
+        public bool UserExists(int id){
+            if(this.users.ContainsKey(id))
+                return true;
+            else
+                return false;
+        }
+
+        public int getHighestID(){
+            int highID = 0;
+                foreach(User user in this.users.Values){
+                    if(highID < user.id)
+                        highID = user.id;
+                }
+            return highID;
+        }
+
         public int AddUser(){
-            int id = this.users.Count + 1;
-            string name = getString("Indtast navn: ");
-            string passHashed = Pass.Hash(Console.ReadLine());
+            int id = getHighestID() + 1;
+            string name = Interface.getString("Indtast navn: ");
+            string passHashed = Interface.getPass();
             this.users.Add(id, new User(name, passHashed, id, 0));
             return id;
         }
@@ -137,12 +275,12 @@ namespace biblo
             if(this.books.ContainsKey(isbn)){
                 this.books[isbn].incCount();
             }else{
-                string title = getString("Indtast bogens titel: ");
-                string author = getString("Indtast bogens forfatter: ");
-                string publisher = getString("Indtast bogens forlag: ");
-                string genre = getString("Indtast bogens genre: ");
-                int published = getInput("Skriv hvad år bogen blev udgivet: ");
-                int pages = getInput("Skriv hvor mange sider bogen har: ");
+                string title = Interface.getString("Indtast bogens titel: ");
+                string author = Interface.getString("Indtast bogens forfatter: ");
+                string publisher = Interface.getString("Indtast bogens forlag: ");
+                string genre = Interface.getString("Indtast bogens genre: ");
+                int published = Interface.getInput("Skriv hvad år bogen blev udgivet: ");
+                int pages = Interface.getInput("Skriv hvor mange sider bogen har: ");
                 this.books.Add(isbn, new Book(title, author, publisher, genre, published, pages, isbn));
             }
         }
@@ -183,33 +321,19 @@ namespace biblo
 
         public void Import()
         {
+            if(File.Exists("books.dat")){
             Stream streambooks = new FileStream("books.dat", FileMode.Open, FileAccess.Read);
             formatter.Serialize(streambooks, books);
             streambooks.Close();
+            }
 
+            if(File.Exists("users.dat")){
             Stream streamusers = new FileStream("users.dat", FileMode.Open, FileAccess.Read);
             formatter.Serialize(streamusers, books);
             streamusers.Close();
+            }
         }
 
-        public static string getString(string message)
-        {
-                Console.Clear();
-                Console.Write(message);
-                return Console.ReadLine();
-        }
-
-        public static int getInput(string message)
-        {
-            int number;
-            do
-            {
-                Console.Clear();
-                Console.Write(message);
-                Console.Write(message);
-            } while (!int.TryParse(Console.ReadLine(), out number));
-            return number;
-        }
     }
 }
 
@@ -229,3 +353,4 @@ Kode skal afleveres via github.
 Dokumentation skal ligge i PDF format (PDF'en skal også indeholde klasse diagrammet med beskrivele).
 
 */
+
