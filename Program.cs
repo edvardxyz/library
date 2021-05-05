@@ -466,10 +466,10 @@ UserMenu:
             Console.WriteLine("\n=======================================\n=======================================");
             if(this.users.Count > 0){
                 foreach(User user in this.users.Values){
-                    Console.WriteLine(user.name);
-                    Console.WriteLine(user.id);
-                    Console.WriteLine(user.borrowedCount);
-                    Console.WriteLine(user.passHashed);
+                    Console.WriteLine("Brugernavn: {0}", user.name);
+                    Console.WriteLine("Bruger ID: {0}", user.id);
+                    Console.WriteLine("Antal bøger lånt: {0}", user.borrowedCount);
+                    Console.WriteLine("sha256 kode: {0}", user.passHashed);
                     Console.WriteLine("=======================================");
                 }
             }else{
@@ -480,49 +480,32 @@ UserMenu:
             Console.ReadKey(true);
         }
 
-        public void Export()
-        {
-            Stream streambooks = new FileStream("books.dat", FileMode.Create, FileAccess.Write);
-            formatter.Serialize(streambooks, books);
-            streambooks.Close();
+        public void Export(){
+            FileStream fs = new FileStream("books.dat", FileMode.Create, FileAccess.Write, FileShare.None);
+            BinaryFormatter bf = new BinaryFormatter();
+            bf.Serialize(fs, this.books);
+            fs.Close();
 
-            Stream streamusers = new FileStream("users.dat", FileMode.Create, FileAccess.Write);
-            formatter.Serialize(streamusers, books);
-            streamusers.Close();
+            FileStream fsUser = new FileStream("users.dat", FileMode.Create, FileAccess.Write, FileShare.None);
+            bf.Serialize(fsUser, this.users);
+            fsUser.Close();
 
         }
+        public void Import(){
 
-        public void Import()
-        {
             if(File.Exists("books.dat")){
-            Stream streambooks = new FileStream("books.dat", FileMode.Open, FileAccess.Read);
-            formatter.Serialize(streambooks, books);
-            streambooks.Close();
+            FileStream fs = new FileStream("books.dat", FileMode.Open, FileAccess.Read, FileShare.Read);
+            BinaryFormatter bf = new BinaryFormatter();
+            this.books = (Dictionary<int, Book>)bf.Deserialize(fs);
+            fs.Close();
             }
-
             if(File.Exists("users.dat")){
-            Stream streamusers = new FileStream("users.dat", FileMode.Open, FileAccess.Read);
-            formatter.Serialize(streamusers, books);
-            streamusers.Close();
+            FileStream fs = new FileStream("users.dat", FileMode.Open, FileAccess.Read, FileShare.Read);
+            BinaryFormatter bf = new BinaryFormatter();
+            this.users = (Dictionary<int, User>)bf.Deserialize(fs);
+            fs.Close();
             }
         }
-
     }
 }
 
-/*
-
-Denne opgave skal i lave et nyt program til et bibliotek,
-
-- Det første der skal laves er et klasse diagram over hvordan i vil opbygge programmet.
-
-- Programmet skal dokumenters løbende og jeres kode skal indeholde kommentare med beskrivelse af hver klasse.
-
-- Skriv programmet med den relevante funktionalitet (opret bog, opret forfatter, lån/aflever bog osv.)
-
-
-Kode skal afleveres via github.
-
-Dokumentation skal ligge i PDF format (PDF'en skal også indeholde klasse diagrammet med beskrivele).
-
-*/
