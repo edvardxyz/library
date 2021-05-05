@@ -344,7 +344,6 @@ UserMenu:
     {
         private Dictionary<int, Book> books = new Dictionary<int, Book>();
         private Dictionary<int, User> users = new Dictionary<int, User>();
-        private IFormatter formatter = new BinaryFormatter();
 
         public bool CheckPass(int id, string pass){
             if(this.users[id].passHashed == pass)
