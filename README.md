@@ -2,7 +2,7 @@
 (all user facing text is in Danish)
 In this library program you can create a library user, login as the user, and login as library admin.
 
-The password to admin is "sikkerkode" and is hardcoded into the program
+The password to admin is "sikkerkode" and is hardcoded into the program.
 When a user has created his account he can login and borrow books, return books, delete his account,
 show all the books he has borrowed or show all the books the library has available.
 
